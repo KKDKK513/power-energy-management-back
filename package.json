@@ -1,0 +1,24 @@
+{
+  "name": "base_server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dayjs": "^1.10.6",
+    "express": "^5.0.0-alpha.8",
+    "http-assert": "^1.4.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.13.6",
+    "multer": "^1.4.4",
+    "mysql2": "^3.8.0"
+  }
+}
