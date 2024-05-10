@@ -1,8 +1,8 @@
 module.exports = app => {
 
     const assert = require('http-assert')
-    const User = require('../../models/system/User')
-    const Department = require('../../models/system/Department')
+    // const User = require('../../models/system/User')
+    // const Department = require('../../models/system/Department')
     const auth = require('../../middleWares/auth')
     const { handleTree, 
             upperFirstLetter, 

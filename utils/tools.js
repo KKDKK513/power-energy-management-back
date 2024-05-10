@@ -125,8 +125,8 @@ function sqlSelectFormat(sqlStr,params) {
     for(let i in params) {
         if(params[i]) {
             console.log(typeof params[i], i);
-            paramsArr.push("`" + i + 
-            (typeof params[i] == "string" ? "` LIKE '%" + params[i] + "%' " : "` = " + params[i] )
+            paramsArr.push(" `" + i + 
+            (typeof params[i] == "string" ? "` LIKE '%" + params[i] + "%' " : "` = '" + params[i] + "' " )
             ) 
         }
     }

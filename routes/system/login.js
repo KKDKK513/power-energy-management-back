@@ -1,8 +1,8 @@
 module.exports = app => {
     const assert = require('http-assert')
     const jwt = require('jsonwebtoken')
-    const User = require('../../models/system/User')
-    const Record = require('../../models/system/Record')
+    // const User = require('../../models/system/User')
+    // const Record = require('../../models/system/Record')
     const bcrypt = require('bcryptjs');
     const { queryAsync } = require('../../plugins/db')
     // 加密

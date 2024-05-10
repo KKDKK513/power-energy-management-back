@@ -2,7 +2,7 @@ module.exports = app => {
 
     const assert = require('http-assert')
     const auth = require('../../middleWares/auth')
-    const Department = require('../../models/system/Department')
+    // const Department = require('../../models/system/Department')
 
     /**
      * @description 查询部门列表

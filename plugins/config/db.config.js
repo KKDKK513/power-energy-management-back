@@ -3,7 +3,11 @@ module.exports = {
   USER: "root",
   PASSWORD: "siwo2024",
   DB: "power-test"
-  // DB: "ruiyi-test"
+
+  // HOST: "localhost",
+  // USER: "root",
+  // PASSWORD: "keke0626",
+  // DB: "power-test"
 
   // HOST: "mysql.sqlpub.com",
   // USER: "siwouser",

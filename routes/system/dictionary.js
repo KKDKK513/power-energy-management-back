@@ -1,8 +1,8 @@
 module.exports = app => {
 
   const assert = require('http-assert')
-  const Dictionary = require('../../models/system/Dictionary')
-  const DictionaryData = require('../../models/system/DictionaryData')
+  // const Dictionary = require('../../models/system/Dictionary')
+  // const DictionaryData = require('../../models/system/DictionaryData')
   const auth = require('../../middleWares/auth')
   const { queryAsync } = require('../../plugins/db')
   const { timeFileter } = require('../../utils/tools')

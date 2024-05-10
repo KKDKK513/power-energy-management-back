@@ -2,7 +2,7 @@ module.exports = app => {
 
     const assert = require('http-assert')
     const auth = require('../../middleWares/auth')
-    const Role = require('../../models/system/Role')
+    // const Role = require('../../models/system/Role')
 
     const { queryAsync } = require('../../plugins/db')
     const pool = require('../../plugins/db')

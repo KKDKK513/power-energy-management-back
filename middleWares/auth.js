@@ -1,7 +1,6 @@
 module.exports = permission => {
     const jwt = require('jsonwebtoken');
     const assert = require('http-assert');
-    // const User = require('../models/system/User')
     const { queryAsync } = require('../plugins/db')
     return async (req, res, next) => {
         // 获取前端传过来的请求头里的认证信息，处理后转为token，并验证token

@@ -7,11 +7,20 @@ module.exports = app => {
     require('./system/dictionary')(app)
     require('./system/role')(app)
     require('./system/department')(app)
-    require('./system/article')(app)
-    require('./system/comment')(app)
-    require('./system/record')(app)
     require('./system/upload')(app)
-    require('./system/process')(app)
+    // monitor
+    require('./monitor/UPSData')(app)
+    require('./monitor/PCSData')(app)
+    require('./monitor/BMSData')(app)
+    require('./monitor/EMSData')(app)
+    require('./monitor/electricMeterData')(app)
+    require('./monitor/dehumidifierData')(app)
+    require('./monitor/fireFightData')(app)
+    require('./monitor/temperatureData')(app)
+    //history
+    require('./history/index')(app)
+    //controlStrategy
+    require('./controlStrategy/index')(app)
 
     // 错误处理
     app.use(async (err, req, res, next) => {
