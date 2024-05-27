@@ -89,7 +89,7 @@ module.exports = app => {
    * */
   app.get('/system/dict/data/type/:dictType', auth('system:dict:detail'), async (req, res) => {
     let dictData = await queryAsync("SELECT * FROM `sys_dict_data` WHERE `dict_type` LIKE '"+ req.params.dictType + "'")
-    console.log(dictData, 'dictData');
+    // console.log(dictData, 'dictData');
     let data = dictData.map(item => {
       return {
         createBy: item.create_by,

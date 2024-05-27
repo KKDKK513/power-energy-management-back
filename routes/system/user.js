@@ -565,7 +565,7 @@ module.exports = app => {
      * */
     app.get('/getInfo', auth('*:*:*'), async (req, res) => {
         let roles = await queryAsync("SELECT * FROM `sys_role` WHERE `role_id` IN ("+ req.rolesId.join(',') + ")")
-        console.log(22, req.rolesId.join(','), roles);
+        // console.log(22, req.rolesId.join(','), roles);
         // let permissions
         // console.log(req.user, 'req.user');
         // if(req.user.user_name == "admin") {

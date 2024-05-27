@@ -6,16 +6,25 @@ module.exports = permission => {
         // 获取前端传过来的请求头里的认证信息，处理后转为token，并验证token
         console.log(req.headers.authorization);
         const token = String(req.headers.authorization || '').split(' ').pop();
-        assert(token, 401, '系统检测到您还没有登录，请先登录！');
+        // assert(token, 401, '系统检测到您还没有登录，请先登录！');
+        if(!token) {
+            res.status(200).send({ code: 401, msg: '系统检测到您还没有登录，请先登录！' });
+            return
+        }
         // 服务端通过给出的secret验证生成的token，将之前传入的id解密出来，进行验证
         let id 
+        let tokenStatus = true
         jwt.verify(token, req.app.get('SECRET'), function(err, decoded) {
             if(err) {
-                assert(!err, 201, err.message);
+                // assert(!err, 401, err.message);
+                console.log({ code: 401, msg: err.message });
+                tokenStatus = false
+                res.status(200).send({ code: 401, msg: 'token过期，请重新登录！' });
             } else {
                 id = decoded.id
             }
         })
+        if(!tokenStatus) return
         // 根据id查找数据库，验证用户是否存在
         let sql = "SELECT * FROM `sys_user` WHERE `user_id` LIKE '"+ id +"'"
         let user = await queryAsync(sql)

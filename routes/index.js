@@ -9,14 +9,16 @@ module.exports = app => {
     require('./system/department')(app)
     require('./system/upload')(app)
     // monitor
+    require('./monitor/BMSData')(app)
     require('./monitor/UPSData')(app)
     require('./monitor/PCSData')(app)
-    require('./monitor/BMSData')(app)
     require('./monitor/EMSData')(app)
     require('./monitor/electricMeterData')(app)
     require('./monitor/dehumidifierData')(app)
     require('./monitor/fireFightData')(app)
     require('./monitor/temperatureData')(app)
+    //dashboard
+    require('./dashboard/index')(app)
     //history
     require('./history/index')(app)
     //controlStrategy

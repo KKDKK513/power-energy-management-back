@@ -44,6 +44,7 @@ module.exports = app => {
                     const token = jwt.sign({
                         id: res[0].user_id
                     }, app.get('SECRET'), { expiresIn: 3600*6 })
+                    // }, app.get('SECRET'), { expiresIn: 60 })
                     response.send({
                         code: 200,
                         message: '登录成功',

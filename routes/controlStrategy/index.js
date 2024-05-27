@@ -16,4 +16,13 @@ module.exports = app => {
       ]
     })
   })
+
+  // 控制策略
+  app.post('/strategy/changeStrategy', auth('*:*:*'), async (req, res) => {
+    console.log(req.body);
+    res.send({
+      code: 200,
+      message: '操作成功'
+    })
+  })
 }
