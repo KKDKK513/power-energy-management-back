@@ -9,7 +9,7 @@ module.exports = app => {
       // const hycRes = await handleAndReadMessages()
       // let resultArr = hycRes
       let resultArr = [
-             '0103020f9bfc1f', '0103020f957ddb', '0103020f817dd4', '01030208fbfe07',
+        '0103020f9bfc1f', '0103020f957ddb', '0103020f817dd4', '01030208fbfe07',
         '0103020904bfd7', '01030208f23e01', '010302000d7981', '010302000ff840',
         '010302000cb841', '01030200097842', '010302000bf983', '010302000a3843',
         '010302139174d8', '010302ffffb844', '010302ffffb844', '010302fff9b844',
@@ -37,6 +37,7 @@ module.exports = app => {
         '010302af0fb844', '010302af0f7984', '010302af0fb86c', '010302af0f7984',
         '010302af0fb86c', '010302af0fb833', '0103021111b844'
       ]
+
       res.send({
         code: 200,
         message: '操作成功',
@@ -49,23 +50,25 @@ module.exports = app => {
       })
     }
   })
+
   /**
    *    * @description 参数设置
    *       * */
   app.post('/monitor/pcsParamsSetting', auth('*:*:*'), async (req, res) => {
-    try {
-      // await processData(req.body)
+    try {     
+      for (i in req.body) {
+        // await processData({ address: `0x${i.slice(1)}`, data: req.body[i] })
+        console.log({ address: `0x${i.slice(1)}`, data: req.body[i] });
+      }
       res.send({
         code: 200,
         message: '操作成功'
-      });
+      })
     } catch (e) {
       res.send({
         code: 201,
-        message: e.message
-      });
+        message: e.msg
+      })
     }
-  });
+  })
 }
-
-
