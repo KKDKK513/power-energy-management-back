@@ -1,13 +1,10 @@
 module.exports = app => {
-  // const { handleAndReadMessages } = require('../../routes/getData/air_conditioner')
   const auth = require('../../middleWares/auth')
   /**
    * @description 查询信息
    * */
   app.get('/dashboard/getDashboardData', auth('*:*:*'), async (req, res) => {
     try {
-      // const hycRes = await handleAndReadMessages()
-      // let resultArr = hycRes
       let resultObj = {
         temperature: 20 + Math.floor(Math.random() * 10) + 1,
         humidity: 20 + Math.floor(Math.random() * 10) + 1,
@@ -37,8 +34,6 @@ module.exports = app => {
    * */
   app.get('/dashboard/getDashboardAlarmData', auth('*:*:*'), async (req, res) => {
     try {
-      // const hycRes = await handleAndReadMessages()
-      // let resultArr = hycRes
       let resultArr = [
         ['2019-07-01 19:25:00', '告警1', 'PCS'],
         ['2019-07-02 17:25:00', '告警2', 'PCS'],

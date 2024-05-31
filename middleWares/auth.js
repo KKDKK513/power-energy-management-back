@@ -4,7 +4,6 @@ module.exports = permission => {
     const { queryAsync } = require('../plugins/db')
     return async (req, res, next) => {
         // 获取前端传过来的请求头里的认证信息，处理后转为token，并验证token
-        console.log(req.headers.authorization);
         const token = String(req.headers.authorization || '').split(' ').pop();
         // assert(token, 401, '系统检测到您还没有登录，请先登录！');
         if(!token) {

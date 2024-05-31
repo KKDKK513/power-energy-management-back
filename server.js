@@ -1,6 +1,8 @@
 const express = require('express')
-
 const app = express()
+const { setIPAddress } = require('./boot');
+const ipAddressFromFrontEnd = '169.254.31.228';
+setIPAddress(ipAddressFromFrontEnd, 'eth0');
 app.all("*", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "*");
@@ -23,4 +25,4 @@ console.log(host, 'host');
 app.listen(port, () => {
     console.log(`http://${host}:${port} has been already started ...`);
 })
-
+// startExecution() 以后直接把这方法调出来即可——>task1

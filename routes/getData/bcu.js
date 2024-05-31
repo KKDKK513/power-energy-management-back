@@ -40,7 +40,6 @@ async function readAllCanMessagesAtInterval(canIds) {
             currentData.push(parts.join(''));
             processedCanIds++;
             if (processedCanIds === canIds.length) {
-                console.log("所有BCU数据: ", currentData, getCurrentDateTimeFormatted());
                 return currentData
             }
         }

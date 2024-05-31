@@ -1,6 +1,5 @@
 module.exports = app => {
     
-    // system
     require('./system/user')(app)
     require('./system/menu')(app)
     require('./system/login')(app)
@@ -8,7 +7,6 @@ module.exports = app => {
     require('./system/role')(app)
     require('./system/department')(app)
     require('./system/upload')(app)
-    // monitor
     require('./monitor/BMSData')(app)
     require('./monitor/UPSData')(app)
     require('./monitor/PCSData')(app)
@@ -17,14 +15,10 @@ module.exports = app => {
     require('./monitor/dehumidifierData')(app)
     require('./monitor/fireFightData')(app)
     require('./monitor/temperatureData')(app)
-    //dashboard
     require('./dashboard/index')(app)
-    //history
     require('./history/index')(app)
-    //controlStrategy
     require('./controlStrategy/index')(app)
 
-    // 错误处理
     app.use(async (err, req, res, next) => {
         res.status(err.statusCode || 500).send({
             message: err.message,

@@ -107,7 +107,6 @@ async function handleAndReadMessages(data = messages485_UART4) {
                 return; // 递归调用后立即返回，避免重复输出“所有PCS的数据”信息
             }
             if (i === data.length - 1) {
-                console.log('所有空调的数据:', currentData, getCurrentDateTimeFormatted());
                 return currentData
             }
         }

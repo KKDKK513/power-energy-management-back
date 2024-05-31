@@ -182,7 +182,6 @@ async function handleAndReadMessages(data = messages485_UART4) {
                 return; // 递归调用后立即返回，避免重复输出“所有PCS的数据”信息
             }
             if (i === data.length - 1) {
-                console.log('所有PCS的数据:', currentData, getCurrentDateTimeFormatted());
                 return currentData
             }
         }
@@ -230,11 +229,15 @@ async function processData(command) {
         const crc_rs = crc16(crc);
         const hexResponse = response.toString('hex');
         const crcResult = hexResponse.slice(-4);
-        console.log('数据修改成功!');
+        if (crcResult === crc_rs && Buffer.compare(crc, rs) === 0) {
+            console.log('数据修改成功!');
+        } else {
+            console.log('数据修改失败: CRC校验错误/发送和接收的数据不符');
+            process.exit(1);
+        }
     } catch (error) {
         console.error('处理数据时出现错误:', error);
         process.exit(1);
     }
 }
-
 module.exports = { handleAndReadMessages, processData };
