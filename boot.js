@@ -31,8 +31,5 @@ function bringInterfaceUp(interface) {
 	});
 }
 
-// const ipAddressFromFrontEnd = '169.254.31.228'; // 这里的 IP 地址可以通过用户输入或其他方式获得
-// setIPAddress(ipAddressFromFrontEnd, 'eth0');
-module.exports = {
-    setIPAddress
-};
+const ipAddressFromFrontEnd = '169.254.31.228'; // 这里的 IP 地址可以通过用户输入或其他方式获得
+setIPAddress(ipAddressFromFrontEnd, 'eth0');

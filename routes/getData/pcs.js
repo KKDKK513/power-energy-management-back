@@ -4,6 +4,9 @@ const CRC = require('../../plugins/config/CRC');
 function swapBytes(crc) {
     return crc.substr(2) + crc.substr(0, 2);
 }
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 function crc16(buffer) {
     let crc = 0xFFFF;
     for (let i = 0; i < buffer.length; i++) {
@@ -164,7 +167,15 @@ function getCurrentDateTimeFormatted() {
     let seconds = ("0" + currentDate.getSeconds()).slice(-2);
     return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
 }
+let isRead = 0
 async function handleAndReadMessages(data = messages485_UART4) {
+    if (isRead == 1) {
+        while(isRead == 1) {
+            console.log(isRead, 'isReadhandleAndReadMessages2');
+            await delay(1000)
+        }
+    }
+    isRead = 1
     let currentData = [];
     try {
         for (let i = 0; i < data.length; i++) {
@@ -182,6 +193,7 @@ async function handleAndReadMessages(data = messages485_UART4) {
                 return; // 递归调用后立即返回，避免重复输出“所有PCS的数据”信息
             }
             if (i === data.length - 1) {
+                isRead = 0
                 return currentData
             }
         }
@@ -216,6 +228,13 @@ async function sendMessage1(data) { // 增加超时 默认5秒 超时的时间�
     });
 }
 async function processData(command) {
+    if (isRead == 1) {
+        while(isRead == 1) {
+            console.log(isRead, 'isReadprocessData2');
+            await delay(1000)
+        }
+    }
+    isRead = 1
     const address = command.address;
     const data = command.data;
     const hexData = data.toString(16).padStart(2, '0');
@@ -231,6 +250,7 @@ async function processData(command) {
         const crcResult = hexResponse.slice(-4);
         if (crcResult === crc_rs && Buffer.compare(crc, rs) === 0) {
             console.log('数据修改成功!');
+            isRead = 0
         } else {
             console.log('数据修改失败: CRC校验错误/发送和接收的数据不符');
             process.exit(1);

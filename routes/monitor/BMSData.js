@@ -301,7 +301,9 @@ module.exports = app => {
     app.post('/monitor/controlDeviceStatus', auth('*:*:*'), async (req, res) => {
         try {
             changePlan(req.body.type)
-            // setTimeout(startExecution, 0)
+            if (req.body.type == 1) {
+                setTimeout(startExecution, 0)
+            }
             const relativePath = '../../plugins/time.txt';
             const filePath = path.join(__dirname, relativePath);
             let _targetTime = fs.readFileSync(filePath);

@@ -1,8 +1,5 @@
 const express = require('express')
 const app = express()
-const { setIPAddress } = require('./boot');
-const ipAddressFromFrontEnd = '169.254.31.228';
-setIPAddress(ipAddressFromFrontEnd, 'eth0');
 app.all("*", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "*");
