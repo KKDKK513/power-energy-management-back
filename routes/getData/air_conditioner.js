@@ -18,6 +18,9 @@ function crc16(buffer) {
     }
     return swapBytes(crc.toString(16).toUpperCase().padStart(4, '0')).toLowerCase(); // 转换为小写字母
 }
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 const messages485_UART4 = [
     [0x01, 0x03, 0x0433, 0x0001],
     [0x01, 0x03, 0x0434, 0x0001],
@@ -89,7 +92,15 @@ function getCurrentDateTimeFormatted() {
     let seconds = ("0" + currentDate.getSeconds()).slice(-2);
     return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
 }
+let isRead = 0
 async function handleAndReadMessages(data = messages485_UART4) {
+    if (isRead == 1) {
+        while (isRead == 1) {
+            console.log(isRead, '空调isReadhandleAndReadMessages2');
+            await delay(500)
+        }
+    }
+    isRead = 1
     let currentData = [];
     try {
         for (let i = 0; i < data.length; i++) {
@@ -107,6 +118,7 @@ async function handleAndReadMessages(data = messages485_UART4) {
                 return; // 递归调用后立即返回，避免重复输出“所有PCS的数据”信息
             }
             if (i === data.length - 1) {
+                isRead = 0
                 return currentData
             }
         }

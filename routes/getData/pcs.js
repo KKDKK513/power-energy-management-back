@@ -171,8 +171,8 @@ let isRead = 0
 async function handleAndReadMessages(data = messages485_UART4) {
     if (isRead == 1) {
         while(isRead == 1) {
-            console.log(isRead, 'isReadhandleAndReadMessages2');
-            await delay(1000)
+            console.log(isRead, 'pcsisReadhandleAndReadMessages2');
+            await delay(500)
         }
     }
     isRead = 1
@@ -230,8 +230,8 @@ async function sendMessage1(data) { // 增加超时 默认5秒 超时的时间�
 async function processData(command) {
     if (isRead == 1) {
         while(isRead == 1) {
-            console.log(isRead, 'isReadprocessData2');
-            await delay(1000)
+            console.log(isRead, 'pcsisReadprocessData2');
+            await delay(500)
         }
     }
     isRead = 1

@@ -25,7 +25,7 @@ const command_charging = {
 };
 const command_discharge = {
     address: '0x0D57',
-    data: 300
+    data: 400
 };
 const command_PowerDown = {
     address: '0x0291',
@@ -57,26 +57,6 @@ const airAlarmList = [
 const bcuAlarmList = [
     0x1C000010, 0x1C001010, 0x1C002010, 0x1C003010
 ]
-
-// 读取时间
-const relativePath = '../../plugins/time.txt';
-const filePath = path.join(__dirname, relativePath);
-let _targetTime = fs.readFileSync(filePath);
-_targetTime = JSON.parse(_targetTime)
-// 监控文件修改
-// 监控文件或目录的变化
-fs.watch(filePath, (eventType, filename) => {
-    console.log(`事件类型: ${eventType}`);
-    if (filename) {
-      console.log(`变化的文件: ${filename}`);
-    }
-    // 文件被修改时的处理逻辑
-    // 例如，重新加载文件内容
-  });
-
-  function changeTime(time) {
-    console.log(` 修改task1时间: ${time}`);
-  }
 function handleAndReadCanMessages(channelName, canId) {
     return new Promise((resolve, reject) => {
         const handler = handleCanMessages(channelName, canId);
@@ -232,10 +212,10 @@ async function readAllCanMessagesAtInterval(canIds) {
 }
 let highestCellVoltage, lowestCellVoltage, soc, soh, mainPositiveRelay, totalVoltage, chargeDischargeCurrent, batteryStatus;
 
-let _pcsAlarm, _airAlarm, _bcuAlarm, pcsStatus, airStatus, bcuStatus, currentDateTime, hycc
-let allStatus = true
+let _pcsAlarm, _airAlarm, _bcuAlarm, pcsStatus, airStatus, bcuStatus, currentDateTime, hycc;
+let allStatus = true;
 
-async function startDataFetching() { // 这个方法会不会五秒执行一次
+async function fetchData() {
     const { results, currentData } = await readAllCanMessagesAtInterval(canIds);
     highestCellVoltage = results['0x1C405010']; // 最高单体电压
     lowestCellVoltage = results['0x1C406010']; // 最低单体电压
@@ -245,36 +225,104 @@ async function startDataFetching() { // 这个方法会不会五秒执行一次
     totalVoltage = results['0x1C401010']; // B+总压 总电压
     chargeDischargeCurrent = results['0x1C400010']; // 总充放电电流
     batteryStatus = results['0x1C400010111']; // 充放电状态
-    readAllCan1MessagesAtInterval()
-    readAllCan1MessagesAtInterval1()
-    readAllCan1MessagesAtInterval2()
-    readAllCan1MessagesAtInterval3()
-    hycc = setInterval(async () => {
-        try {
-            _pcsAlarm = await handleAndReadPCSMessages(pcsAlarmList)
-            _airAlarm = await handleAndReadAirMessages(airAlarmList)
-            _bcuAlarm = await readAllCanMessagesAtIntervalBcu(bcuAlarmList)
-            pcsStatus = checkAlarmStatus1(_pcsAlarm) // false无故障
-            airStatus = checkAlarmStatus1(_airAlarm) // false无故障
-            bcuStatus = checkAlarmStatusBcu(_bcuAlarm) // false无故障
-            allStatus = !(airStatus || pcsStatus || bcuStatus);
-            const { results, currentData } = await readAllCanMessagesAtInterval(canIds);
-            highestCellVoltage = results['0x1C405010']; // 最高单体电压
-            lowestCellVoltage = results['0x1C406010']; // 最低单体电压
-            soc = results['0x1C40D010'].soc; // soc
-            soh = results['0x1C40D010'].soh; // soh
-            mainPositiveRelay = results['0x1C415010']; // 总正继电器状态
-            totalVoltage = results['0x1C401010']; // B+总压 总电压
-            chargeDischargeCurrent = results['0x1C400010']; // 总充放电电流
-            batteryStatus = results['0x1C400010111']; // 充放电状态
-            readAllCan1MessagesAtInterval()
-            readAllCan1MessagesAtInterval1()
-            readAllCan1MessagesAtInterval2()
-            readAllCan1MessagesAtInterval3()
-        } catch (error) {
-            console.error('Error:', error);
+}
+
+async function updateStatus() {
+    _pcsAlarm = await handleAndReadPCSMessages(pcsAlarmList);
+    _airAlarm = await handleAndReadAirMessages(airAlarmList);
+    _bcuAlarm = await readAllCanMessagesAtIntervalBcu(bcuAlarmList);
+    pcsStatus = checkAlarmStatus1(_pcsAlarm); // false无故障
+    airStatus = checkAlarmStatus1(_airAlarm); // false无故障
+    bcuStatus = checkAlarmStatusBcu(_bcuAlarm); // false无故障
+    allStatus = !(airStatus || pcsStatus || bcuStatus);
+}
+
+async function readAllCan1MessagesAtInterval() {
+    try {
+        let firstPart = '0x' + highestCellVoltage.substring(0, 2);
+        let secondPart = '0x' + highestCellVoltage.substring(2);
+        let thirdPart = '0x' + lowestCellVoltage.substring(0, 2);
+        let fourPart = '0x' + lowestCellVoltage.substring(2);
+        const canData = [firstPart, secondPart, thirdPart, fourPart, soc, soh, 0x00, mainPositiveRelay];
+        await handleAndReadCanMessagesNew("can1", 0x180150F1, canData);
+    } catch (error) {
+        console.error('Error in readAllCan1MessagesAtInterval:', error);
+    }
+}
+
+async function readAllCan1MessagesAtInterval1() {
+    try {
+        let firstPart1 = '0x' + totalVoltage.substring(0, 2);
+        let secondPart2 = '0x' + totalVoltage.substring(2);
+        let thirdPart3 = '0x' + chargeDischargeCurrent.substring(0, 2);
+        let fourPart4 = '0x' + chargeDischargeCurrent.substring(2);
+        const canData1 = [firstPart1, secondPart2, thirdPart3, fourPart4, 0x8F, 0xE4, 0x70, 0x1C]; // 8FE4对应-28700补码
+        await handleAndReadCanMessagesNew("can1", 0x180250F1, canData1);
+    } catch (error) {
+        console.error('Error in readAllCan1MessagesAtInterval1:', error);
+    }
+}
+
+async function readAllCan1MessagesAtInterval2() {
+    try {
+        let status; // batteryStatus 0：空闲  1：放电  2：充电 3: 禁充禁放
+        if (batteryStatus === '0x01') {
+            status = 0x05;
+        } else if (batteryStatus === '0x02') {
+            status = 0x04;
+        } else if (batteryStatus === '0x00') {
+            status = 0x00;
+        } else if (batteryStatus === '0x03') {
+            status = 0x01;
         }
-    }, 2000);
+        const canData3 = [status, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // 对应 0 1 4 5
+        await handleAndReadCanMessagesNew("can1", 0x180650F1, canData3);
+    } catch (error) {
+        console.error('Error in readAllCan1MessagesAtInterval2:', error);
+    }
+}
+
+async function readAllCan1MessagesAtInterval3() {
+    try {
+        const canData4 = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        await handleAndReadCanMessagesNew("can1", 0x180750F1, canData4);
+    } catch (error) {
+        console.error('Error in readAllCan1MessagesAtInterval3:', error);
+    }
+}
+
+async function readAllCan1Messages() {
+    console.log('can通讯');
+    readAllCan1MessagesAtInterval();
+    readAllCan1MessagesAtInterval1();
+    readAllCan1MessagesAtInterval2();
+    readAllCan1MessagesAtInterval3();
+}
+
+async function startDataFetching() {
+    try {
+        await updateStatus(); // 判断故障
+        await delay(100);
+        await fetchData(); // 获取pcs can在bcu中需要的数据
+        await delay(100);
+        await readAllCan1Messages(); // pcs can
+        await delay(100);
+
+        hycc = setInterval(async () => {
+            try {
+                await updateStatus(); // 判断故障
+                await delay(100);
+                await fetchData(); // 获取pcs can在bcu中需要的数据
+                await delay(100);
+                await readAllCan1Messages(); // pcs can
+                await delay(100);
+            } catch (error) {
+                console.error('Error in interval:', error);
+            }
+        }, 2000);
+    } catch (error) {
+        console.error('Error in startDataFetching:', error);
+    }
 }
 
 function handleAndReadCanMessagesNew(channelName, canId, canData) { // 写
@@ -344,14 +392,11 @@ async function readAllCanMessagesAtInterval1(canIds) {
             const canIdOutIn = [0x1C414010]
             const _readMsg = await handleAndReadCanMessages('can0', canIdOutIn)
             const readMsg = _readMsg.data.toString('hex').match(/.{2}/g);
-            const canReadId = decimalToHex(_readMsg.id).substring(0, 5);
-            const _canReadId = decimalToHex(canIdOutIn).substring(0, 5);
             if (canIdhyc === canId123) {
                 currentData.push(parts.join(''));
                 currentReadData.push(readMsg.join(''))
                 processedCanIds++;
                 if (processedCanIds === canIds.length) {
-                    console.log("修改之后的bcu数据:", currentData);
                     console.log('读取并簇/退簇状态:', currentReadData);
                     const resultsBing = Buffer.from([0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]).toString('hex')
                     const resultsTui = Buffer.from([0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00]).toString('hex')
@@ -381,33 +426,83 @@ async function readAllCanMessagesAtInterval1(canIds) {
     }
 }
 
-let relativePathshouldContinuePlan = '../../plugins/time.txt';
-let filePathshouldContinuePlan = path.join(__dirname, relativePathshouldContinuePlan);
-let _shouldContinuePlan = fs.readFileSync(filePathshouldContinuePlan);
-_shouldContinuePlan = JSON.parse(_shouldContinuePlan)
-let shouldContinuePlan = _shouldContinuePlan.shouldContinuePlan
+
+let shouldContinuePlan = 2
+let targetTime = {}
 function changePlan(num) {
     console.log('num', num);
     shouldContinuePlan = num
 }
+function startTimewatch() {
+    const relativePath = '../../plugins/time.txt';
+    const filePath = path.join(__dirname, relativePath);
+    let _targetTime = fs.readFileSync(filePath);
+    targetTime = JSON.parse(_targetTime)
+    shouldContinuePlan = targetTime.shouldContinuePlan
+    fs.watch(filePath, (eventType, filename) => {
+        if (filename) {
+            fs.readFile(filePath, 'utf8', (err, data) => {
+                if (err) {
+                    console.error(`读取文件时出错: ${err}`);
+                    return;
+                }
+                targetTime = JSON.parse(data)
+                shouldContinuePlan = targetTime.shouldContinuePlan
+            });
+        }
+    });
+}
 
+function getShouldContinuePlan() {
+    return { shouldContinuePlan, allStatus }
+}
+function withTimeout(promise, timeout, errorMsg) {
+    console.log(new Date(), 'start');
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            console.log(new Date(), 'end');
+            reject(new Error(errorMsg));
+        }, timeout);
+
+        promise
+            .then(response => {
+                clearTimeout(timer);
+                resolve(response);
+            })
+            .catch(err => {
+                clearTimeout(timer);
+                reject(err);
+            });
+    });
+}
+function isWriteStop() {
+    const relativePath = '../../plugins/time.txt';
+    const filePath = path.join(__dirname, relativePath);
+    let _targetTime = fs.readFileSync(filePath);
+    _targetTime = JSON.parse(_targetTime)
+    let _data = {
+        ..._targetTime,
+        shouldContinuePlan: 2
+    }
+    fs.writeFileSync(filePath, JSON.stringify(_data));
+}
 async function planA() {  // 待机-充电-关机
     let chargeLevel = 0;
     try {
-        console.log('shouldContinuePlan', shouldContinuePlan);
-        while (shouldContinuePlan === 1) {
-            console.log('allStatusA', allStatus);
+        await delay(1000)
+        await processData(commandB); // 并网
+        await delay(1000);
+        await processData(command_PowerOn);  // 开机
+        await delay(11000);
+        while (shouldContinuePlan === 1) { // 为了点停止可以让充电/放电停下来 shouldContinuePlan为2的时候会停下来 传2的时候会停止
             if (!allStatus) {
+                isWriteStop()
                 console.log('出现故障即将关机');
                 break
             }
             currentDateTime = getCurrentDateTime();
             let currentDateTimeNow = getCurrentDateTime();
-            const relativePath = '../../plugins/time.txt';
-            const filePath = path.join(__dirname, relativePath);
-            let _targetTime = fs.readFileSync(filePath);
-            _targetTime = JSON.parse(_targetTime)
-            let _isPlanA = _targetTime.chargingTime.filter(item => {
+            let _isPlanA = targetTime.chargingTime.filter(item => {
                 return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
             })
             if (_isPlanA.length <= 0) {
@@ -415,50 +510,51 @@ async function planA() {  // 待机-充电-关机
                 startExecution()
                 break
             }
-            await delay(1000)
-            await processData(commandB); // 并网
-            await delay(1000);
-            await processData(command_PowerOn);  // 开机
-            await delay(11000);
             await processData(command_charging);
-            await delay(1000);
-            const _msg = await handleAndReadCanMessages('can0', [0x1C405010]);
-            const parts = _msg.data.toString('hex').match(/.{2}/g);
-            const str = parts.join('');
-            const result = str.substring(4, 8);
-            const decimalResult = parseInt(result, 16);
-            const canIdhyc = decimalToHex(_msg.id).substring(0, 5);
-            const canId123 = '1c405010'.substring(0, 5);
-            if (canIdhyc === canId123) {
-                if (decimalResult >= 3395) {
-                    chargeLevel++;
-                    switch (chargeLevel) {
-                        case 1:
-                            command_charging.data = -380;
-                            await processData(command_charging); // 更新充电功率
-                            console.log(`电量未充满...正在充电中... 进行修改功率: ${command_charging.data}当前电压:`, currentDateTime, decimalResult);
-                            break;
-                        case 2:
-                            command_charging.data = -190;
-                            await processData(command_charging); // 更新充电功率
-                            console.log(`电量未充满...正在充电中... 进行修改功率: ${command_charging.data}当前电压:`, currentDateTime, decimalResult);
-                            break;
-                        case 3:
+            try {
+                const _msg = await withTimeout(handleAndReadCanMessages('can0', [0x1C405010]), 5000, 'CAN message timeout');
+                const parts = _msg.data.toString('hex').match(/.{2}/g);
+                const str = parts.join('');
+                const result = str.substring(4, 8);
+                const decimalResult = parseInt(result, 16);
+                const canIdhyc = decimalToHex(_msg.id).substring(0, 5);
+                const canId123 = '1c405010'.substring(0, 5);
+                if (canIdhyc === canId123) {
+                    if (decimalResult >= 3380) {
+                        chargeLevel++;
+                        switch (chargeLevel) {
+                            case 1:
+                                command_charging.data = -380;
+                                await processData(command_charging); // 更新充电功率
+                                console.log(`电量未充满...正在充电中... 进行修改功率: ${command_charging.data}当前电压:`, currentDateTime, decimalResult);
+                                break;
+                            case 2:
+                                command_charging.data = -190;
+                                await processData(command_charging); // 更新充电功率
+                                console.log(`电量未充满...正在充电中... 进行修改功率: ${command_charging.data}当前电压:`, currentDateTime, decimalResult);
+                                break;
+                            case 3:
+                                console.log('电量已充满', currentDateTime, decimalResult);
+                                break;
+                        }
+                        await delay(5000);
+                        if (chargeLevel >= 3) {
                             console.log('电量已充满', currentDateTime, decimalResult);
-                            break;
-                    }
-                    await delay(30000);
-                    if (chargeLevel >= 3) {
-                        console.log('电量已充满', currentDateTime, decimalResult);
-                        break; // 达到三次后退出
+                            isWriteStop()
+                            break; // 达到三次后退出
+                        }
+                    } else {
+                        console.log('电量未充满...正在充电中... 当前电压:', currentDateTime, decimalResult);
+                        await delay(5000);
                     }
                 } else {
-                    console.log('电量未充满...正在充电中... 当前电压:', currentDateTime, decimalResult);
-                    await delay(30000);
+                    console.log('发送和接收的canId不一致');
+                    process.exit(1);
                 }
-            } else {
-                console.log('发送和接收的canId不一致');
-                process.exit(1);
+            } catch (error) {
+                console.error('处理CAN消息时出现错误:', error);
+                await delay(5000)
+                continue;
             }
         }
         console.log('@@@planA');
@@ -471,19 +567,20 @@ async function planA() {  // 待机-充电-关机
 }
 async function planB() { // 待机-并网放电-关机 shouldContinuePlan放方法中作为参数
     try {
+        await delay(1000);
+        await processData(commandB); // 并网
+        await delay(1000);
+        await processData(command_PowerOn);  // 开机
+        await delay(11000);
         while (shouldContinuePlan === 1) { // 手动停
-            console.log('allStatusB', allStatus);
             if (!allStatus) {
+                isWriteStop()
                 console.log('出现故障即将关机');
                 break
             }
             currentDateTime = getCurrentDateTime();
             let currentDateTimeNow = getCurrentDateTime();
-            const relativePath = '../../plugins/time.txt';
-            const filePath = path.join(__dirname, relativePath);
-            let _targetTime = fs.readFileSync(filePath);
-            _targetTime = JSON.parse(_targetTime)
-            let _isPlanB = _targetTime.dischargeTime.filter(item => {
+            let _isPlanB = targetTime.dischargeTime.filter(item => {
                 return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
             })
             if (_isPlanB.length <= 0) {
@@ -492,33 +589,36 @@ async function planB() { // 待机-并网放电-关机 shouldContinuePlan放方�
                 startExecution()
                 break
             }
-            await delay(1000);
-            await processData(commandB); // 并网
-            await delay(1000);
-            await processData(command_PowerOn);  // 开机
-            await delay(11000);
             await processData(command_discharge); // 追加三级告警判断 依次修改command_discharge 放电
-            await delay(1000);
-            const _msg = await handleAndReadCanMessages('can0', [0x1C406010]);
-            const parts = _msg.data.toString('hex').match(/.{2}/g);
-            const str = parts.join('');
-            const result = str.substring(12, 16);
-            const decimalResult = parseInt(result, 16);
-            const canIdhyc = decimalToHex(_msg.id).substring(0, 5);
-            const canId123 = '1c406010'.substring(0, 5);
-            if (canIdhyc === canId123) {
-                if (decimalResult <= 3005) {
-                    await processData(command_PowerDown);
-                    console.log('电量已放完', currentDateTime, decimalResult);
-                    await delay(30000) // 这里可以最后判断电表时间   await planA() 放电之后开始充电
-                    break;
+            console.log('功率写入');
+            try {
+                const _msg = await withTimeout(handleAndReadCanMessages('can0', [0x1C406010]), 5000, 'CAN message timeout');
+                console.log(_msg, 'can回复');
+                const parts = _msg.data.toString('hex').match(/.{2}/g);
+                const str = parts.join('');
+                const result = str.substring(12, 16);
+                const decimalResult = parseInt(result, 16);
+                const canIdhyc = decimalToHex(_msg.id).substring(0, 5);
+                const canId123 = '1c406010'.substring(0, 5);
+                if (canIdhyc === canId123) {
+                    if (decimalResult <= 3005) {
+                        await processData(command_PowerDown);
+                        console.log('电量已放完', currentDateTime, decimalResult);
+                        await delay(5000) // 这里可以最后判断电表时间   await planA() 放电之后开始充电
+                        isWriteStop()
+                        break;
+                    } else {
+                        console.log('电量未放完...正在放电中... 当前电压:', currentDateTime, decimalResult);
+                        await delay(5000);
+                    }
                 } else {
-                    console.log('电量未放完...正在放电中... 当前电压:', decimalResult);
-                    await delay(30000);
+                    console.log('发送和接收的canId不一致');
+                    process.exit(1);
                 }
-            } else {
-                console.log('发送和接收的canId不一致');
-                process.exit(1);
+            } catch (error) {
+                console.error('处理CAN消息时出现错误:', error);
+                await delay(5000)
+                continue;
             }
         }
         console.log('@@@planB');
@@ -538,21 +638,23 @@ async function executePlanB() {
 let hyc = null
 async function startExecution() {
     console.log('111打印111');
+    startTimewatch() // 这个方法是一直都的吗？ 还是需要没几秒监听一次
     await readAllCanMessagesAtInterval1(canIdshyc)
     await startDataFetching(); // 一直有
+    if (!allStatus) { // pcs开机之前如果有故障就直接return 因为还没有开机 所以不用再关机
+        isWriteStop()
+        console.log('出现故障即将关机'); // 这里pcs压根没开机 直接return没毛病
+        return
+    }
+
     let currentDateTimeNow = getCurrentDateTime();
-    console.log('计时器1', currentDateTimeNow);
-    const relativePath = '../../plugins/time.txt';
-    const filePath = path.join(__dirname, relativePath);
-    let _targetTime = fs.readFileSync(filePath);
-    _targetTime = JSON.parse(_targetTime)
-    let _isPlanA = _targetTime.chargingTime.filter(item => {
-        return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1] // 将符合条件的那一项返回
-    })
-    let _isPlanB = _targetTime.dischargeTime.filter(item => {
+    let _isPlanA = targetTime.chargingTime.filter(item => {
         return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
     })
-    if (_isPlanA.length > 0 || _isPlanB.length > 0) {
+    let _isPlanB = targetTime.dischargeTime.filter(item => {
+        return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
+    })
+    if (_isPlanA.length > 0 || _isPlanB.length > 0) { // 判断时间到没到 时间到了就开始执行
         if (_isPlanA.length > 0) {
             executePlanA();
         }
@@ -560,23 +662,22 @@ async function startExecution() {
             executePlanB();
         }
         return
-    } else {
+    } else { // 如果时间没到 就开始走计时器直到时间到设定时间
         hyc = setInterval(() => {
-            console.log('else的hyc定时器111');
+            if (!allStatus) { // 出现故障 这里也没有开机 直接return即可
+                isWriteStop()
+                console.log('出现故障即将关机');
+                return
+            }
             let currentDateTimeNow = getCurrentDateTime();
-            console.log('计时器2', currentDateTimeNow);
-            const relativePath = '../../plugins/time.txt';
-            const filePath = path.join(__dirname, relativePath);
-            let _targetTime = fs.readFileSync(filePath);
-            _targetTime = JSON.parse(_targetTime)
-            let _isPlanA = _targetTime.chargingTime.filter(item => {
-                return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1] // 将符合条件的那一项返回
+            let _isPlanA = targetTime.chargingTime.filter(item => {
+                return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
             })
-            let _isPlanB = _targetTime.dischargeTime.filter(item => {
+            let _isPlanB = targetTime.dischargeTime.filter(item => {
                 return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
             })
             if (_isPlanA.length > 0 || _isPlanB.length > 0) {
-                clearInterval(hyc)
+                clearInterval(hyc) // 如果到了充电时间/放电时间 就把定时器清掉
                 if (_isPlanA.length > 0) {
                     executePlanA();
                 }
@@ -584,8 +685,7 @@ async function startExecution() {
                     executePlanB();
                 }
             }
-        }, 30000); // 时间可以再调小一点
+        }, 30000);
     }
 }
-// module.exports = { changeTime, startDataFetching, readAllCanMessagesAtInterval1, startExecution, changePlan };
-module.exports = { changeTime};
+module.exports = { startDataFetching, readAllCanMessagesAtInterval1, startExecution, changePlan, getShouldContinuePlan };

@@ -2,7 +2,7 @@ module.exports = app => {
     const auth = require('../../middleWares/auth')
     const fs = require('fs');
     const path = require('path');
-    // const { startExecution, changePlan } = require('../getData/task1')
+    // const { startExecution, changePlan, getShouldContinuePlan } = require('../getData/task1')
     // const { readAllCanMessagesAtInterval, processAllCanSendsAtInterval } = require('../getData/bcu')
     const canIds = [
         0x1C000010, 0x1C001010, 0x1C002010, 0x1C003010,
@@ -259,17 +259,15 @@ module.exports = app => {
     app.get('/monitor/getNavBMSData', auth('*:*:*'), async (req, res) => {
         try {
             // const bcu = await readAllCanMessagesAtInterval([0x1C400010])
+            // let shouldContinuePlan = getShouldContinuePlan();
             const bcu = ['0000000000000000']
-            const relativePath = '../../plugins/time.txt';
-            const filePath = path.join(__dirname, relativePath);
-            let _targetTime = fs.readFileSync(filePath);
-            _targetTime = JSON.parse(_targetTime)
+            let shouldContinuePlan = '2'
             res.send({
                 code: 200,
                 message: '操作成功',
                 data: {
                     bcu: bcu[0],
-                    status: _targetTime.shouldContinuePlan
+                    status: shouldContinuePlan
                 }
             })
         } catch (e) {
@@ -301,9 +299,6 @@ module.exports = app => {
     app.post('/monitor/controlDeviceStatus', auth('*:*:*'), async (req, res) => {
         try {
             changePlan(req.body.type)
-            if (req.body.type == 1) {
-                setTimeout(startExecution, 0)
-            }
             const relativePath = '../../plugins/time.txt';
             const filePath = path.join(__dirname, relativePath);
             let _targetTime = fs.readFileSync(filePath);
@@ -311,6 +306,9 @@ module.exports = app => {
             _targetTime.shouldContinuePlan = req.body.type
             console.log(_targetTime);
             fs.writeFileSync(filePath,JSON.stringify(_targetTime)); //写入
+            if (req.body.type == 1) {
+                setTimeout(startExecution, 0)
+            }
             res.send({
                 code: 200,
                 message: '操作成功'

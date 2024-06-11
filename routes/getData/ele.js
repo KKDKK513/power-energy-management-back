@@ -126,7 +126,6 @@ async function handleAndReadMessages(data = messages485_UART4) {
                 return; 
             }
             if (i === data.length - 1) {
-                console.log('所有电表的数据:', currentData, getCurrentDateTimeFormatted());
                 return currentData
             }
         }

@@ -60,7 +60,6 @@ function handleAndReadCanMessagesNew(channelName, canId, canData) { // 写
 async function readAllCanMessagesAtIntervalNew(canSend) {
     let currentData = [];
     let processedCanIds = 0;
-    console.log('滚');
     for (const canId of canSend.canIds) {
         const msg = await handleAndReadCanMessagesNew("can0", canSend.canIds, canSend.canData);
         console.log('hyc123', msg);
