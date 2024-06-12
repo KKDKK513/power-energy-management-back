@@ -328,45 +328,9 @@ async function startDataFetching() {
 function handleAndReadCanMessagesNew(channelName, canId, canData) { // 写
     return new Promise(async (resolve, reject) => {
         const handler = handleCanMessages(channelName, canId);
-        handler.send1(canData); // 我想让这行代码在某些条件去掉变成只读
-        handler.read(function (data) {
-            resolve(data);
-        });
+        handler.send1(canData);
+        resolve()
     });
-}
-async function readAllCan1MessagesAtInterval() {
-    let firstPart = '0x' + highestCellVoltage.substring(0, 2);
-    let secondPart = '0x' + highestCellVoltage.substring(2);
-    let thirdPart = '0x' + lowestCellVoltage.substring(0, 2);
-    let fourPart = '0x' + lowestCellVoltage.substring(2);
-    const canData = [firstPart, secondPart, thirdPart, fourPart, soc, soh, 0x00, mainPositiveRelay];
-    await handleAndReadCanMessagesNew("can1", 0x180150F1, canData);
-}
-async function readAllCan1MessagesAtInterval1() {
-    let firstPart1 = '0x' + totalVoltage.substring(0, 2);
-    let secondPart2 = '0x' + totalVoltage.substring(2);
-    let thirdPart3 = '0x' + chargeDischargeCurrent.substring(0, 2);
-    let fourPart4 = '0x' + chargeDischargeCurrent.substring(2);
-    const canData1 = [firstPart1, secondPart2, thirdPart3, fourPart4, 0x8F, 0xE4, 0x70, 0x1C]; // 8FE4对应-28700补码
-    await handleAndReadCanMessagesNew("can1", 0x180250F1, canData1);
-}
-async function readAllCan1MessagesAtInterval2() {
-    let status; // batteryStatus 0：空闲  1：放电  2：充电 3: 禁充禁放
-    if (batteryStatus === '0x01') {
-        status = 0x05;
-    } else if (batteryStatus === '0x02') {
-        status = 0x04;
-    } else if (batteryStatus === '0x00') {
-        status = 0x00;
-    } else if (batteryStatus === '0x03') {
-        status = 0x01;
-    }
-    const canData3 = [status, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // 对应 0 1 4 5
-    await handleAndReadCanMessagesNew("can1", 0x180650F1, canData3);
-}
-async function readAllCan1MessagesAtInterval3() {
-    const canData4 = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-    await handleAndReadCanMessagesNew("can1", 0x180750F1, canData4);
 }
 function handleAndReadCanMessagesNew1(channelName, canId, canData) {
     return new Promise(async (resolve, reject) => {
@@ -377,6 +341,7 @@ function handleAndReadCanMessagesNew1(channelName, canId, canData) {
         });
     });
 }
+
 async function readAllCanMessagesAtInterval1(canIds) {
     let currentData = [];
     let currentReadData = []
@@ -425,7 +390,6 @@ async function readAllCanMessagesAtInterval1(canIds) {
         }
     }
 }
-
 
 let shouldContinuePlan = 2
 let targetTime = {}
@@ -565,7 +529,7 @@ async function planA() {  // 待机-充电-关机
         process.exit(1);
     }
 }
-async function planB() { // 待机-并网放电-关机 shouldContinuePlan放方法中作为参数
+async function planB() { // 待机-并网放电-关机
     try {
         await delay(1000);
         await processData(commandB); // 并网
@@ -638,7 +602,7 @@ async function executePlanB() {
 let hyc = null
 async function startExecution() {
     console.log('111打印111');
-    startTimewatch() // 这个方法是一直都的吗？ 还是需要没几秒监听一次
+    startTimewatch() 
     await readAllCanMessagesAtInterval1(canIdshyc)
     await startDataFetching(); // 一直有
     if (!allStatus) { // pcs开机之前如果有故障就直接return 因为还没有开机 所以不用再关机

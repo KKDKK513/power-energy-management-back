@@ -46,8 +46,6 @@ async function readAllCanMessagesAtInterval(canIds) {
     }
 }
 
-
-
 function handleAndReadCanMessagesNew(channelName, canId, canData) { // 写
     return new Promise(async (resolve, reject) => {
         const handler = handleCanMessages(channelName, canId);
@@ -62,7 +60,6 @@ async function readAllCanMessagesAtIntervalNew(canSend) {
     let processedCanIds = 0;
     for (const canId of canSend.canIds) {
         const msg = await handleAndReadCanMessagesNew("can0", canSend.canIds, canSend.canData);
-        console.log('hyc123', msg);
         const hexData = msg.data.toString('hex');
         const parts = hexData.match(/.{2}/g);
         const canIdhyc = decimalToHex(msg.id).substring(0, 5);
@@ -78,7 +75,6 @@ async function readAllCanMessagesAtIntervalNew(canSend) {
 }
 async function processAllCanSendsAtInterval(canSends) {
     for (const canSend of canSends) {
-        console.log('cnm', canSend);
         readAllCanMessagesAtIntervalNew(canSend);
     }
 }
