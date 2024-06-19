@@ -1,1 +1,1 @@
-{"chargingTime":["14:21:47-17:21:47"],"dischargeTime":["14:22:06-14:22:06"],"type":"3","shouldContinuePlan":2}
+{"chargingTime":["00:00:00-04:00:00",""],"dischargeTime":["08:00:00-10:00:00","11:00:00-14:02:00"],"type":"3","shouldContinuePlan":2}

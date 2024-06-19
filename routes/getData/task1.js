@@ -94,7 +94,7 @@ const canIds = [
     0x1C22C010, 0x1C22D010, 0x1C22E010, 0x1C22F010, 0x1C230010, 0x1C231010, 0x1C232010, 0x1C233010, 0x1C234010, 0x1C235010, 0x1C236010, 0x1C237010, 0x1C238010, 0x1C239010, 0x1C23A010, 0x1C23B010,
     0x1C800010, 0x1C804010, 0x1C808010, 0x1C809010, 0x1C82D010, 0x1C830010, 0x1C837010, 0x1C838010, 0x1C839010
 ];
-function checkAlarmStatus1(alarmList) { 
+function checkAlarmStatus1(alarmList) {
     let alarmStatus = false;
     for (let alarm of alarmList) {
         if (alarm !== '0103020000b844') {
@@ -104,7 +104,7 @@ function checkAlarmStatus1(alarmList) {
     }
     return alarmStatus;
 }
-function checkAlarmStatusBcu(alarmList) { 
+function checkAlarmStatusBcu(alarmList) {
     let alarmStatus = false;
     for (let alarm of alarmList) {
         if (alarm !== '0000000000000000') {
@@ -114,6 +114,21 @@ function checkAlarmStatusBcu(alarmList) {
     }
     return alarmStatus;
 }
+
+function promiseWithTimeout(promise, ms) {
+    const timeout = new Promise((_, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error('Promise timed out after ' + ms + ' ms'));
+        }, ms);
+    });
+
+    return Promise.race([
+        promise,
+        timeout
+    ]);
+}
+
 async function readAllCanMessagesAtInterval(canIds) {
     let currentData = [];
     let currentData405 = [];
@@ -224,56 +239,104 @@ async function updateStatus() {
 }
 
 async function readAllCan1MessagesAtInterval() {
-    try {
-        let firstPart = '0x' + highestCellVoltage.substring(0, 2);
-        let secondPart = '0x' + highestCellVoltage.substring(2);
-        let thirdPart = '0x' + lowestCellVoltage.substring(0, 2);
-        let fourPart = '0x' + lowestCellVoltage.substring(2);
-        const canData = [firstPart, secondPart, thirdPart, fourPart, soc, soh, 0x00, mainPositiveRelay];
-        await handleAndReadCanMessagesNew("can1", 0x180150F1, canData);
-    } catch (error) {
-        console.error('Error in readAllCan1MessagesAtInterval:', error);
+    const maxRetries = 3;
+    const timeoutDuration = 5000;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            let firstPart = '0x' + highestCellVoltage.substring(0, 2);
+            let secondPart = '0x' + highestCellVoltage.substring(2);
+            let thirdPart = '0x' + lowestCellVoltage.substring(0, 2);
+            let fourPart = '0x' + lowestCellVoltage.substring(2);
+            const canData = [firstPart, secondPart, thirdPart, fourPart, soc, soh, 0x00, mainPositiveRelay];
+
+            await promiseWithTimeout(handleAndReadCanMessagesNew("can1", 0x180150F1, canData), timeoutDuration);
+            console.log('CAN message handled successfully');
+            break;
+        } catch (error) {
+            console.error(`Error in attempt ${attempt} of readAllCan1MessagesAtInterval:`, error);
+            if (attempt === maxRetries) {
+                console.error('Max retries reached. Exiting...');
+            } else {
+                console.log('Retrying...');
+            }
+        }
     }
 }
 
 async function readAllCan1MessagesAtInterval1() {
-    try {
-        let firstPart1 = '0x' + totalVoltage.substring(0, 2);
-        let secondPart2 = '0x' + totalVoltage.substring(2);
-        let thirdPart3 = '0x' + chargeDischargeCurrent.substring(0, 2);
-        let fourPart4 = '0x' + chargeDischargeCurrent.substring(2);
-        const canData1 = [firstPart1, secondPart2, thirdPart3, fourPart4, 0x8F, 0xE4, 0x70, 0x1C];
-        await handleAndReadCanMessagesNew("can1", 0x180250F1, canData1);
-    } catch (error) {
-        console.error('Error in readAllCan1MessagesAtInterval1:', error);
+    const maxRetries = 3;
+    const timeoutDuration = 5000; // 超时时间，单位为毫秒
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            let firstPart1 = '0x' + totalVoltage.substring(0, 2);
+            let secondPart2 = '0x' + totalVoltage.substring(2);
+            let thirdPart3 = '0x' + chargeDischargeCurrent.substring(0, 2);
+            let fourPart4 = '0x' + chargeDischargeCurrent.substring(2);
+            const canData1 = [firstPart1, secondPart2, thirdPart3, fourPart4, 0x8F, 0xE4, 0x70, 0x1C];
+            await promiseWithTimeout(handleAndReadCanMessagesNew("can1", 0x180250F1, canData1), timeoutDuration);
+            console.log('CAN message 1 handled successfully');
+            break; // 成功后跳出循环
+        } catch (error) {
+            console.error(`Error in attempt ${attempt} of readAllCan1MessagesAtInterval1:`, error);
+            if (attempt === maxRetries) {
+                console.error('Max retries reached for readAllCan1MessagesAtInterval1. Exiting...');
+            } else {
+                console.log('Retrying readAllCan1MessagesAtInterval1...');
+            }
+        }
     }
 }
 
 async function readAllCan1MessagesAtInterval2() {
-    try {
-        let status; // batteryStatus 0：空闲  1：放电  2：充电 3: 禁充禁放
-        if (batteryStatus === '0x01') {
-            status = 0x05;
-        } else if (batteryStatus === '0x02') {
-            status = 0x04;
-        } else if (batteryStatus === '0x00') {
-            status = 0x00;
-        } else if (batteryStatus === '0x03') {
-            status = 0x01;
+    const maxRetries = 3;
+    const timeoutDuration = 5000; // 超时时间，单位为毫秒
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            let status; // batteryStatus 0：空闲  1：放电  2：充电 3: 禁充禁放
+            if (batteryStatus === '0x01') {
+                status = 0x05;
+            } else if (batteryStatus === '0x02') {
+                status = 0x04;
+            } else if (batteryStatus === '0x00') {
+                status = 0x00;
+            } else if (batteryStatus === '0x03') {
+                status = 0x01;
+            }
+            const canData3 = [status, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+            await promiseWithTimeout(handleAndReadCanMessagesNew("can1", 0x180650F1, canData3), timeoutDuration);
+            console.log('CAN message 2 handled successfully');
+            break; // 成功后跳出循环
+        } catch (error) {
+            console.error(`Error in attempt ${attempt} of readAllCan1MessagesAtInterval2:`, error);
+            if (attempt === maxRetries) {
+                console.error('Max retries reached for readAllCan1MessagesAtInterval2. Exiting...');
+            } else {
+                console.log('Retrying readAllCan1MessagesAtInterval2...');
+            }
         }
-        const canData3 = [status, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // 对应 0 1 4 5
-        await handleAndReadCanMessagesNew("can1", 0x180650F1, canData3);
-    } catch (error) {
-        console.error('Error in readAllCan1MessagesAtInterval2:', error);
     }
 }
 
 async function readAllCan1MessagesAtInterval3() {
-    try {
-        const canData4 = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-        await handleAndReadCanMessagesNew("can1", 0x180750F1, canData4);
-    } catch (error) {
-        console.error('Error in readAllCan1MessagesAtInterval3:', error);
+    const maxRetries = 3;
+    const timeoutDuration = 5000; // 超时时间，单位为毫秒
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const canData4 = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+            await promiseWithTimeout(handleAndReadCanMessagesNew("can1", 0x180750F1, canData4), timeoutDuration);
+            console.log('CAN message 3 handled successfully');
+            break; // 成功后跳出循环
+        } catch (error) {
+            console.error(`Error in attempt ${attempt} of readAllCan1MessagesAtInterval3:`, error);
+            if (attempt === maxRetries) {
+                console.error('Max retries reached for readAllCan1MessagesAtInterval3. Exiting...');
+            } else {
+                console.log('Retrying readAllCan1MessagesAtInterval3...');
+            }
+        }
     }
 }
 
@@ -339,7 +402,7 @@ async function readAllCanMessagesAtInterval1(canIds) {
         const parts = hexData.match(/.{2}/g);
         const canIdhyc = decimalToHex(msg.id).substring(0, 5);
         const canId123 = decimalToHex(canId).substring(0, 5);
-        if (canId === 0x1C8E7010 || canId === 0x1C8E8010) { 
+        if (canId === 0x1C8E7010 || canId === 0x1C8E8010) {
             const canIdOutIn = [0x1C414010]
             const _readMsg = await handleAndReadCanMessages('can0', canIdOutIn)
             const readMsg = _readMsg.data.toString('hex').match(/.{2}/g);
@@ -444,7 +507,7 @@ async function planA() {  // 充电
         await delay(1000);
         await processData(command_PowerOn);
         await delay(11000);
-        while (shouldContinuePlan === 1) { 
+        while (shouldContinuePlan === 1) {
             if (!allStatus) {
                 isWriteStop()
                 console.log('出现故障即将关机');
@@ -465,7 +528,7 @@ async function planA() {  // 充电
                 const _msg = await withTimeout(handleAndReadCanMessages('can0', [0x1C405010]), 5000, 'CAN message timeout');
                 const parts = _msg.data.toString('hex').match(/.{2}/g);
                 const str = parts.join('');
-                const result = str.substring(4, 8);
+                const result = str.substring(4, 8); // 分为 0-4 4-8 8-12 12-16
                 const decimalResult = parseInt(result, 16);
                 const canIdhyc = decimalToHex(_msg.id).substring(0, 5);
                 const canId123 = '1c405010'.substring(0, 5);
@@ -484,6 +547,11 @@ async function planA() {  // 充电
                                 console.log(`电量未充满...正在充电中... 进行修改功率: ${command_charging.data}当前电压:`, currentDateTime, decimalResult);
                                 break;
                             case 3:
+                                command_charging.data = -100;
+                                await processData(command_charging);
+                                console.log(`电量未充满...正在充电中... 进行修改功率: ${command_charging.data}当前电压:`, currentDateTime, decimalResult);
+                                break;
+                            case 4:
                                 console.log('电量已充满', currentDateTime, decimalResult);
                                 break;
                         }
@@ -568,7 +636,7 @@ async function planB() { // 放电
             } catch (error) {
                 console.error('处理CAN消息时出现错误:', error);
                 await delay(5000)
-                continue;
+                continue; // continue会继续往下走 走下一次的循环 因为出现超时的情况 所以可以允许超时现象的出现
             }
         }
         console.log('@@@planB');
@@ -588,12 +656,12 @@ async function executePlanB() {
 let hyc = null
 async function startExecution() {
     console.log('111打印111');
-    startTimewatch() 
+    startTimewatch()
     await readAllCanMessagesAtInterval1(canIdshyc)
     await startDataFetching();
-    if (!allStatus) { 
+    if (!allStatus) {
         isWriteStop()
-        console.log('出现故障即将关机'); 
+        console.log('出现故障即将关机');
         return
     }
 
@@ -604,7 +672,7 @@ async function startExecution() {
     let _isPlanB = targetTime.dischargeTime.filter(item => {
         return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
     })
-    if (_isPlanA.length > 0 || _isPlanB.length > 0) { 
+    if (_isPlanA.length > 0 || _isPlanB.length > 0) {
         if (_isPlanA.length > 0) {
             executePlanA();
         }
@@ -612,9 +680,9 @@ async function startExecution() {
             executePlanB();
         }
         return
-    } else { 
+    } else {
         hyc = setInterval(() => {
-            if (!allStatus) { 
+            if (!allStatus) {
                 isWriteStop()
                 console.log('出现故障即将关机');
                 return
@@ -627,7 +695,7 @@ async function startExecution() {
                 return currentDateTimeNow >= item.split('-')[0] && currentDateTimeNow <= item.split('-')[1]
             })
             if (_isPlanA.length > 0 || _isPlanB.length > 0) {
-                clearInterval(hyc) 
+                clearInterval(hyc)
                 if (_isPlanA.length > 0) {
                     executePlanA();
                 }

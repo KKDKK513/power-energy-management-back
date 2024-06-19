@@ -58,5 +58,17 @@ module.exports = app => {
       })
     }
   })
+
+    /**
+   * @description 修改Ip
+   * */
+    app.post('/IPChange', auth('*:*:*'), async (req, res) => {
+      console.log(req);
+      console.log(req.body);
+      res.send({
+        code: 200,
+        message: '操作成功',
+      })
+    })
 }
 
