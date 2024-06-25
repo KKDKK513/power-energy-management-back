@@ -70,5 +70,14 @@ module.exports = app => {
         message: '操作成功',
       })
     })
+    /**
+   * @description 测试连接
+   * */
+    app.get('/verify', async (req, res) => {
+      res.send({
+        code: 200,
+        message: '操作成功',
+      })
+    })
 }
 
